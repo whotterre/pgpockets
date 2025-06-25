@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -134,6 +135,22 @@ func (h *AuthHandler) LoginUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"messsage": "User logged in successfully",
-		"user": user,
+		"user":     user,
+	})
+}
+
+func (h *AuthHandler) LogoutUser(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(uuid.UUID)
+
+	err := h.authService.Logout(userID)
+	if err != nil {
+		h.logger.Error("Failed to logout user", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to log out user",
+		})
+	}
+	h.logger.Info("Logged out user successfully")
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Successfully logged out user",
 	})
 }

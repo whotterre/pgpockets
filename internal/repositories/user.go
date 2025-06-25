@@ -21,8 +21,8 @@ type UserRepository interface {
 	GetUserByEmail(email string) (*models.User, error)
 	DeleteUser(id uuid.UUID) error
 	CreateProfile(profile *models.Profile) error
-
 	CreateSession(session *models.Session) error
+	DeleteSession(userID uuid.UUID) error
 }
 
 func (u *gormUserRepository) CreateProfile(profile *models.Profile) error {
@@ -57,6 +57,10 @@ func (r *gormUserRepository) GetUserByEmail(email string) (*models.User, error) 
 
 func (r *gormUserRepository) CreateSession(session *models.Session) error {
 	return r.db.Create(session).Error
+}
+
+func (r *gormUserRepository) DeleteSession(userID uuid.UUID) error {
+    return r.db.Where("user_id = ?", userID).Delete(&models.Session{}).Error
 }
 
 type gormUserRepository struct {

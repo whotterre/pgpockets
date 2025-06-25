@@ -7,6 +7,7 @@ import (
 	"pgpockets/internal/utils"
 	"time"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -31,6 +32,7 @@ type AuthService interface {
 		gender string,
 	) (*models.User, error)
 	Login(email, password, ipAddr, userAgent string) (string, error)
+	Logout(userID uuid.UUID) error 
 }
 
 type authService struct {
@@ -121,7 +123,7 @@ func (s *authService) Login(email, password, ipAddr, userAgent string) (string, 
 		s.logger.Warn("Login failed: invalid password", zap.String("email", email))
 		return "", ErrInvalidCredentials
 	}
-
+	
 	// Generate JWT tokens for access and refresh token
 	accessToken, err := utils.GenerateJWTToken(
 		user.ID,
@@ -162,4 +164,19 @@ func (s *authService) Login(email, password, ipAddr, userAgent string) (string, 
 	}
 	s.logger.Info("User logged in successfully", zap.String("email", email))
 	return "", nil
+}
+
+func (s *authService) Logout(userID uuid.UUID) error {
+	err := s.userRepo.DeleteSession(userID)
+
+	if err != nil {
+		s.logger.Error("Failed to delete user sessions",
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return err
+	}
+
+	s.logger.Info("User logged out successfully!")
+	return nil
+
 }
