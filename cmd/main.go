@@ -6,6 +6,7 @@ import (
 	"pgpockets/internal/database"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,7 @@ func main() {
 	defer appLogger.Sync()
 
 	app.Use(logger.New())
-	
+	app.Use(helmet.New())
 	config, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("cannot load config: %v", err)
