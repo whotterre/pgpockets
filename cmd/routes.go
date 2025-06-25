@@ -22,6 +22,12 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	authGroup.Post("/register", authHandlers.RegisterUser)
 	authGroup.Post("/login", authHandlers.LoginUser)
 	authGroup.Delete("/logout", authHandlers.LogoutUser)
-	
+
+	// Dashboard routes
+	dashboardRepo := repositories.NewDashboardRepository(db)
+	dashboardService := services.NewDashboardService(dashboardRepo, appLogger, config.ExchangeRatesAPIKey)
+	dashboardHandlers := handlers.NewDashboardHandler(dashboardService, appLogger)
+	dashboardGroup := apiV1.Group("/dashboard")
+	dashboardGroup.Get("/exchange-rates", dashboardHandlers.GetExchangeRates)
 
 }

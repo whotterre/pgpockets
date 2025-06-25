@@ -6,6 +6,7 @@ type Config struct {
 	DBSource   string `mapstructure:"DB_SOURCE"`
 	ServerAddr string `mapstructure:"SERVER_ADDR"`
 	JWTSecret  string `mapstructure:"JWT_SECRET"`
+	ExchangeRatesAPIKey string `mapstructure:"EXCHANGE_RATES_API_KEY"`
 }
 
 func LoadConfig() (config Config, err error) {
