@@ -4,6 +4,7 @@ import (
 	"errors"
 	"pgpockets/internal/models"
 	"pgpockets/internal/repositories"
+	"pgpockets/internal/utils"
 	"time"
 
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ type AuthService interface {
 		address string,
 		gender string,
 	) (*models.User, error)
-	Login(email, password string) (string, error)
+	Login(email, password, ipAddr, userAgent string) (string, error)
 }
 
 type authService struct {
@@ -77,12 +78,11 @@ func (s *authService) Register(
 		PasswordHash: string(hashedPassword),
 	}
 	parsedDOB, err := time.Parse("02-01-2006", dob)
-    if err != nil {
-        s.logger.Error("Failed to parse date of birth", zap.Error(err))
-        return nil, errors.New("invalid date of birth format, expected DD-MM-YYYY")
-    }
+	if err != nil {
+		s.logger.Error("Failed to parse date of birth", zap.Error(err))
+		return nil, errors.New("invalid date of birth format, expected DD-MM-YYYY")
+	}
 
-	
 	err = s.userRepo.CreateUser(user)
 	if err != nil {
 		s.logger.Error("Failed to create user", zap.Error(err))
@@ -108,6 +108,58 @@ func (s *authService) Register(
 	return user, nil
 }
 
-func (s *authService) Login(email, password string) (string, error) {
+func (s *authService) Login(email, password, ipAddr, userAgent string) (string, error) {
+	user, err := s.userRepo.GetUserByEmail(email)
+
+	// Check if password matches
+	if user == nil {
+		s.logger.Warn("Login failed: user not found", zap.String("email", email))
+		return "", ErrInvalidCredentials
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		s.logger.Warn("Login failed: invalid password", zap.String("email", email))
+		return "", ErrInvalidCredentials
+	}
+
+	// Generate JWT tokens for access and refresh token
+	accessToken, err := utils.GenerateJWTToken(
+		user.ID,
+		s.jwtSecret,
+		time.Now().Add(15*time.Minute),
+	)
+	if err != nil {
+		s.logger.Error("Failed to generate JWT token", zap.Error(err))
+		return "", ErrTokenGenerationFailed
+	}
+
+	refreshToken, err := utils.GenerateJWTToken(
+		user.ID,
+		s.jwtSecret,
+		time.Now().Add(15*time.Minute),
+	)
+	if err != nil {
+		s.logger.Error("Failed to generate JWT token", zap.Error(err))
+		return "", ErrTokenGenerationFailed
+	}
+
+	// Create a new session for the user
+	session := &models.Session{
+		UserID:                user.ID,
+		ClientIP:              ipAddr,
+		UserAgent:             userAgent,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  time.Now().Add(15 * time.Minute),
+		RefreshTokenExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+		RefreshToken:          refreshToken,
+		IsActive:              true,
+	}
+
+	err = s.userRepo.CreateSession(session)
+	if err != nil {
+		s.logger.Error("Failed to create user session", zap.Error(err))
+		return "", ErrTokenGenerationFailed
+	}
+	s.logger.Info("User logged in successfully", zap.String("email", email))
 	return "", nil
 }

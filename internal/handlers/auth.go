@@ -86,12 +86,54 @@ func (h *AuthHandler) RegisterUser(c *fiber.Ctx) error {
 	})
 }
 
+type UserLoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
 func (h *AuthHandler) LoginUser(c *fiber.Ctx) error {
-	// Get request body
-	// Validate request body
-	// Check if user exists
-	// Verify password
-	// Generate JWT token and refresh token
-	// Store in sessions table and return to client
-	return nil 
+	// Read the request body
+	var req UserLoginRequest
+	if err := json.Unmarshal(c.Body(), &req); err != nil {
+		h.logger.Warn("Failed to parse request body",
+			zap.Error(err),
+			zap.String("raw_body", string(c.Body())),
+		)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+	}
+
+	// Validate the request data
+	if err := h.validator.Struct(req); err != nil {
+		h.logger.Warn("Validation failed", zap.Error(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
+	}
+
+	userAgent := string(c.Context().UserAgent())
+	if len(userAgent) > 255 {
+		userAgent = userAgent[:255]
+	}
+	user, err := h.authService.Login(req.Email, req.Password, c.IP(), userAgent)
+	if err != nil {
+		if err == services.ErrInvalidCredentials {
+			h.logger.Warn("Login failed: invalid credentials", zap.String("email", req.Email))
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Invalid email or password",
+			})
+		}
+		h.logger.Error("Failed to login user", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to login user",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"messsage": "User logged in successfully",
+		"user": user,
+	})
 }

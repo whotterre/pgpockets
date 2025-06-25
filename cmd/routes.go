@@ -20,4 +20,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	authService := services.NewAuthService(userRepo, appLogger, config.JWTSecret)
 	authHandlers := handlers.NewAuthHandler(authService, appLogger)
 	authGroup.Post("/register", authHandlers.RegisterUser)
+	authGroup.Post("/login", authHandlers.LoginUser)
+	
+
 }

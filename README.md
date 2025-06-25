@@ -1,8 +1,11 @@
-FinPay Backend
+# FinPay Backend
 A FinTech Solution built with Go, Fiber, and PostgreSQL
 
 This repository contains the backend services for FinPay, a comprehensive FinTech application designed to empower users with robust financial management tools. The application will enable users to create invoices, generate virtual cards, set up virtual accounts, and process payments in multiple currencies.
+[Challenge](https://app.masteringbackend.com/projects/build-fin-pay-a-fin-tech-solution)
 
+I decided to start this project to try out the Go Fiber framework and GORM.
+I would also like to try a more maintainable (Repo, Service, Handler) approach while trying to make it as 12 Factor-ish as possible.
 🚀 Project Overview
 The FinPay project aims to build a high-performance and secure backend system capable of handling various financial operations. This solution is developed using Go, leveraging the speed of the Fiber web framework and the reliability of PostgreSQL as its primary data store.
 
