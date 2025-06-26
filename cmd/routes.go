@@ -55,6 +55,13 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	walletGroup := apiV1.Group("/wallets")
 	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
 
+	// Profile routes
+	profileRepo := repositories.NewProfileRepository(db)
+	profileService := services.NewProfileService(profileRepo, appLogger)
+	profileHandlers := handlers.NewProfileHandler(profileService, appLogger)
+	profileGroup := apiV1.Group("/profile")
+	profileGroup.Get("/", profileHandlers.GetProfile)
+
 }
 
 

@@ -155,3 +155,4 @@ func (h *AuthHandler) LogoutUser(c *fiber.Ctx) error {
 		"message": "Successfully logged out user",
 	})
 }
+
