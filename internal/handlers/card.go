@@ -110,3 +110,36 @@ func (h *CardHandler) RetrieveAllCards(c *fiber.Ctx) error {
 	h.logger.Info("Cards retrieved successfully", zap.Int("count", len(cards)))
 	return c.Status(fiber.StatusOK).JSON(cards)
 }
+
+func (h *CardHandler) GetCardByID(c *fiber.Ctx) error {
+	cardID := c.Params("cardID")
+	if cardID == "" {
+		h.logger.Error("Card ID is required")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Card ID is required",
+		})
+	}
+
+	cardUUID, err := uuid.Parse(cardID)
+	if err != nil {
+		h.logger.Error("Invalid Card ID format", zap.Error(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid Card ID format",
+		})
+	}
+	card, err := h.service.GetCardByID(cardUUID.String())
+	if err != nil {
+		h.logger.Error("Failed to retrieve card", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve card",
+		})
+	}
+	if card == (models.Card{}) {
+		h.logger.Info("Card not found", zap.String("cardID", cardID))
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "Card not found",
+		})
+	}
+	h.logger.Info("Card retrieved successfully", zap.String("cardID", cardID))
+	return c.Status(fiber.StatusOK).JSON(card)
+}
