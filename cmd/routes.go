@@ -19,7 +19,8 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	// Auth routes
 	authGroup := apiV1.Group("/auth")
 	userRepo := repositories.NewUserRepository(db)
-	authService := services.NewAuthService(userRepo, appLogger, config.JWTSecret)
+	walletRepo := repositories.NewWalletRepository(db)
+	authService := services.NewAuthService(userRepo, walletRepo, appLogger, config.JWTSecret)
 	authHandlers := handlers.NewAuthHandler(authService, appLogger)
 	authGroup.Post("/register", authHandlers.RegisterUser)
 	authGroup.Post("/login", authHandlers.LoginUser)
@@ -46,6 +47,8 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	cardGroup.Get("/cards", cardHandlers.RetrieveAllCards)
 	cardGroup.Get("/card/:cardID", cardHandlers.GetCardByID)
 	cardGroup.Delete("/card/:cardID", cardHandlers.DeleteCard)
+	// Wallet routes
+	
 }
 
 

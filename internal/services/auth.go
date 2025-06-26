@@ -37,13 +37,20 @@ type AuthService interface {
 
 type authService struct {
 	userRepo  repositories.UserRepository
+	walletRepo repositories.WalletRepository
 	logger    *zap.Logger
 	jwtSecret string
 }
 
-func NewAuthService(userRepo repositories.UserRepository, logger *zap.Logger, jwtSecret string) *authService {
+func NewAuthService(
+	userRepo repositories.UserRepository,
+	walletRepo repositories.WalletRepository,
+	logger *zap.Logger,
+	jwtSecret string,
+	) *authService {
 	return &authService{
 		userRepo:  userRepo,
+		walletRepo: walletRepo,
 		logger:    logger,
 		jwtSecret: jwtSecret,
 	}
@@ -107,6 +114,14 @@ func (s *authService) Register(
 		}
 		return nil, err
 	}
+
+	// Create wallet
+	if err := s.walletRepo.CreateWallet(user.ID); err != nil {
+		s.logger.Error("Something went wrong while creating the wallet", zap.Error(err))
+	}
+	
+
+
 	s.logger.Info("User registered successfully", zap.String("email", email))
 	return user, nil
 }
