@@ -143,3 +143,32 @@ func (h *CardHandler) GetCardByID(c *fiber.Ctx) error {
 	h.logger.Info("Card retrieved successfully", zap.String("cardID", cardID))
 	return c.Status(fiber.StatusOK).JSON(card)
 }
+
+func (h *CardHandler) DeleteCard(c *fiber.Ctx) error {
+	cardID := c.Params("cardID")
+	if cardID == "" {
+		h.logger.Error("Card ID is required")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Card ID is required",
+		})
+	}
+
+	cardUUID, err := uuid.Parse(cardID)
+	if err != nil {
+		h.logger.Error("Invalid Card ID format", zap.Error(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid Card ID format",
+		})
+	}
+
+	if err := h.service.DeleteCard(cardUUID.String()); err != nil {
+		h.logger.Error("Failed to delete card", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete card",
+		})
+	}
+	h.logger.Info("Card deleted successfully", zap.String("cardID", cardID))
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Card deleted successfully",
+	})
+}

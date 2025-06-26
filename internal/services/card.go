@@ -11,6 +11,7 @@ type CardService interface {
 	CreateCard(card *models.Card) error
 	RetrieveAllCards(userID string) ([]*models.Card, error)
 	GetCardByID(cardID string) (models.Card, error)
+	DeleteCard(cardID string) error 
 }
 
 type cardService struct {
@@ -53,4 +54,14 @@ func (s *cardService) GetCardByID(cardID string) (models.Card, error) {
 	}
 	s.logger.Info("Card retrieved successfully", zap.String("cardID", card.ID.String()))
 	return card, nil
+}
+
+func (s *cardService) DeleteCard(cardID string) error {
+	err := s.repository.DeleteCard(cardID)
+	if err != nil {
+		s.logger.Error("Failed to delete card", zap.Error(err))
+		return err
+	}
+	s.logger.Info("Card deleted successfully", zap.String("cardID", cardID))
+	return nil
 }

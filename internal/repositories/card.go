@@ -10,6 +10,7 @@ type CardRepository interface {
 	CreateCard(card *models.Card) error
 	RetrieveAllCards(userID string) ([]*models.Card, error)
 	GetCardByID(cardID string) (models.Card, error) 
+	DeleteCard(cardID string) error
 }
 
 
@@ -45,4 +46,11 @@ func (r *cardRepository) GetCardByID(cardID string) (models.Card, error) {
 		return models.Card{}, err
 	}
 	return card, nil
+}
+
+func (r *cardRepository) DeleteCard(cardID string) error {
+	if err := r.db.Where("id = ?", cardID).Delete(&models.Card{}).Error; err != nil {
+		return err
+	}
+	return nil
 }
