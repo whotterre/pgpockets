@@ -8,6 +8,7 @@ import (
 
 type ProfileRepository interface {
 	GetProfileByUserID(userID string) (*models.Profile, error)
+	UpdateProfile(profile *models.Profile) error
 }
 
 type profileRepository struct {
@@ -26,4 +27,11 @@ func (r *profileRepository) GetProfileByUserID(userID string) (*models.Profile, 
 		return nil, err
 	}
 	return &profile, nil
+}
+
+func (r *profileRepository) UpdateProfile(profile *models.Profile) error {
+	if err := r.db.Save(profile).Error; err != nil {
+		return err
+	}
+	return nil
 }

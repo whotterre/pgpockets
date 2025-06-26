@@ -61,6 +61,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	profileHandlers := handlers.NewProfileHandler(profileService, appLogger)
 	profileGroup := apiV1.Group("/profile")
 	profileGroup.Get("/", profileHandlers.GetProfile)
+	profileGroup.Put("/", profileHandlers.UpdateProfile)
 
 }
 
