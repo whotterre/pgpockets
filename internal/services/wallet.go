@@ -8,7 +8,8 @@ import (
 )
 
 type WalletService interface {
-
+	CreateWallet(userID uuid.UUID) error
+	GetWalletBalance(userID uuid.UUID) (string, error)
 }
 
 type walletService struct {
@@ -30,3 +31,13 @@ func (s *walletService) CreateWallet(userID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (s *walletService) GetWalletBalance(userID uuid.UUID) (string, error) {
+	balance, err := s.walletRepo.GetWalletBalance(userID)
+	if err != nil {
+		s.logger.Error("Failed to get wallet balance", zap.Error(err))
+		return "", err
+	}
+	return balance, nil
+}
+

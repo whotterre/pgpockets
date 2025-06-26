@@ -58,6 +58,15 @@ func (r *gormUserRepository) GetUserByEmail(email string) (*models.User, error) 
 	return &user, nil
 }
 
+func (r *gormUserRepository) GetUserByID(id uuid.UUID) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *gormUserRepository) CreateSession(session *models.Session) error {
 	return r.db.Create(session).Error
 }

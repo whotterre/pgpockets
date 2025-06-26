@@ -9,6 +9,7 @@ import (
 
 type WalletRepository interface {
 	CreateWallet(userID uuid.UUID) error 
+	GetWalletBalance(userID uuid.UUID) (string, error)
 }
 
 type walletRepository struct {
@@ -32,4 +33,13 @@ func (r *walletRepository) CreateWallet(userID uuid.UUID) error {
 		return err
 	}
 	return nil
+}
+
+
+func (r *walletRepository) GetWalletBalance(userID uuid.UUID) (string, error) {
+	var wallet models.Wallet
+	if err := r.db.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+		return "", err
+	}
+	return wallet.Balance, nil
 }

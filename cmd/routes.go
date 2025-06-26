@@ -30,6 +30,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 
 	/* Protected routes */
 	apiV1.Use(authMiddleware.RequireAuth())
+	
 	authGroup.Delete("/logout", authHandlers.LogoutUser)
 
 	// Dashboard routes
@@ -47,8 +48,13 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	cardGroup.Get("/cards", cardHandlers.RetrieveAllCards)
 	cardGroup.Get("/card/:cardID", cardHandlers.GetCardByID)
 	cardGroup.Delete("/card/:cardID", cardHandlers.DeleteCard)
-	// Wallet routes
 	
+	// Wallet routes
+	walletService := services.NewWalletService(walletRepo, appLogger)
+	walletHandlers := handlers.NewWalletHandler(walletService, appLogger)
+	walletGroup := apiV1.Group("/wallets")
+	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
+
 }
 
 
