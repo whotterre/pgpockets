@@ -9,6 +9,7 @@ import (
 
 type CardService interface {
 	CreateCard(card *models.Card) error
+	RetrieveAllCards(userID string) ([]*models.Card, error)
 }
 
 type cardService struct {
@@ -31,4 +32,14 @@ func (s *cardService) CreateCard(card *models.Card) error {
 	}
 	s.logger.Info("Card created successfully", zap.String("cardID", card.ID.String()))
 	return nil
+}
+
+func (s *cardService) RetrieveAllCards(userID string) ([]*models.Card, error){
+	cards, err := s.repository.RetrieveAllCards(userID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve cards", zap.Error(err))
+		return nil, err
+	}
+	s.logger.Info("Cards retrieved successfully", zap.Int("count", len(cards)))
+	return cards, nil
 }

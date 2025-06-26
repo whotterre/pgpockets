@@ -8,6 +8,7 @@ import (
 
 type CardRepository interface {
 	CreateCard(card *models.Card) error
+	RetrieveAllCards(userID string) ([]*models.Card, error)
 }	
 
 type cardRepository struct {
@@ -25,4 +26,12 @@ func (r *cardRepository) CreateCard(card *models.Card) error {
 		return err
 	}
 	return nil
+}
+// Retrieves all cards owned by a particular user
+func (r *cardRepository) RetrieveAllCards(userID string) ([]*models.Card, error) {
+	var cards []*models.Card
+	if err := r.db.Where("user_id = ?", userID).Find(&cards).Error; err != nil {
+		return nil, err
+	}
+	return cards, nil
 }

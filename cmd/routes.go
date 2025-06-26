@@ -43,4 +43,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	cardHandlers := handlers.NewCardHandler(cardService, appLogger)
 	cardGroup := apiV1.Group("/cards")
 	cardGroup.Post("/", cardHandlers.CreateCard)
+	cardGroup.Get("/cards", cardHandlers.RetrieveAllCards)
 }
+
+

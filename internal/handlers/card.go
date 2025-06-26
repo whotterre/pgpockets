@@ -57,7 +57,6 @@ func (h *CardHandler) CreateCard(c *fiber.Ctx) error {
 	}
 
 
-
 	newCard := &models.Card{
 		UserID:         userID,
 		LastFourDigits: card.LastFourDigits,
@@ -89,4 +88,25 @@ func (h *CardHandler) CreateCard(c *fiber.Ctx) error {
 		"bank_name":    newCard.BankName,
 		"is_active":    newCard.IsActive,
 	})
+}
+
+func (h *CardHandler) RetrieveAllCards(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(uuid.UUID)
+
+	cards, err := h.service.RetrieveAllCards(userID.String())
+	if err != nil {
+		h.logger.Error("Failed to retrieve cards", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve cards",
+		})
+	}
+
+	if len(cards) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "No cards found for this user",
+		})
+	}
+
+	h.logger.Info("Cards retrieved successfully", zap.Int("count", len(cards)))
+	return c.Status(fiber.StatusOK).JSON(cards)
 }
