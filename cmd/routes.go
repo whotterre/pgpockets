@@ -51,10 +51,10 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	
 	// Wallet routes
 	walletService := services.NewWalletService(walletRepo, appLogger)
-	walletHandlers := handlers.NewWalletHandler(walletService, appLogger)
+	walletHandlers := handlers.NewWalletHandler(walletService, appLogger, config.ExchangeRatesAPIKey)
 	walletGroup := apiV1.Group("/wallets")
 	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
-
+	walletGroup.Put("/currency/:desiredCurrency", walletHandlers.ChangeWalletCurrency)
 	// Profile routes
 	profileRepo := repositories.NewProfileRepository(db)
 	profileService := services.NewProfileService(profileRepo, appLogger)
@@ -62,6 +62,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	profileGroup := apiV1.Group("/profile")
 	profileGroup.Get("/", profileHandlers.GetProfile)
 	profileGroup.Put("/", profileHandlers.UpdateProfile)
+	
 
 }
 
