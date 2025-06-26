@@ -31,8 +31,8 @@ type AuthService interface {
 		address string,
 		gender string,
 	) (*models.User, error)
-	Login(email, password, ipAddr, userAgent string) (string, error)
-	Logout(userID uuid.UUID) error 
+	Login(email, password, ipAddr, userAgent string) (string, string, error)
+	Logout(userID uuid.UUID) error
 }
 
 type authService struct {
@@ -97,6 +97,7 @@ func (s *authService) Register(
 		DateOfBirth: &parsedDOB,
 		PhoneNumber: phoneNumber,
 		Address:     address,
+		Gender:      gender,
 	}
 	err = s.userRepo.CreateProfile(profile)
 	if err != nil {
@@ -110,20 +111,20 @@ func (s *authService) Register(
 	return user, nil
 }
 
-func (s *authService) Login(email, password, ipAddr, userAgent string) (string, error) {
+func (s *authService) Login(email, password, ipAddr, userAgent string) (string, string, error) {
 	user, err := s.userRepo.GetUserByEmail(email)
 
 	// Check if password matches
 	if user == nil {
 		s.logger.Warn("Login failed: user not found", zap.String("email", email))
-		return "", ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		s.logger.Warn("Login failed: invalid password", zap.String("email", email))
-		return "", ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
-	
+
 	// Generate JWT tokens for access and refresh token
 	accessToken, err := utils.GenerateJWTToken(
 		user.ID,
@@ -132,7 +133,7 @@ func (s *authService) Login(email, password, ipAddr, userAgent string) (string, 
 	)
 	if err != nil {
 		s.logger.Error("Failed to generate JWT token", zap.Error(err))
-		return "", ErrTokenGenerationFailed
+		return "", "", ErrTokenGenerationFailed
 	}
 
 	refreshToken, err := utils.GenerateJWTToken(
@@ -142,7 +143,7 @@ func (s *authService) Login(email, password, ipAddr, userAgent string) (string, 
 	)
 	if err != nil {
 		s.logger.Error("Failed to generate JWT token", zap.Error(err))
-		return "", ErrTokenGenerationFailed
+		return "", "", ErrTokenGenerationFailed
 	}
 
 	// Create a new session for the user
@@ -160,10 +161,10 @@ func (s *authService) Login(email, password, ipAddr, userAgent string) (string, 
 	err = s.userRepo.CreateSession(session)
 	if err != nil {
 		s.logger.Error("Failed to create user session", zap.Error(err))
-		return "", ErrTokenGenerationFailed
+		return "", "", ErrTokenGenerationFailed
 	}
 	s.logger.Info("User logged in successfully", zap.String("email", email))
-	return "", nil
+	return accessToken, refreshToken, nil
 }
 
 func (s *authService) Logout(userID uuid.UUID) error {

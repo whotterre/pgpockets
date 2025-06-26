@@ -3,6 +3,7 @@ package repositories
 import (
 	"errors"
 	"pgpockets/internal/models"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -23,6 +24,8 @@ type UserRepository interface {
 	CreateProfile(profile *models.Profile) error
 	CreateSession(session *models.Session) error
 	DeleteSession(userID uuid.UUID) error
+	GetActiveSessionByToken(accessToken string) (*models.Session, error)
+	RefreshSession(refreshToken string) (*models.Session, error)
 }
 
 func (u *gormUserRepository) CreateProfile(profile *models.Profile) error {
@@ -61,6 +64,26 @@ func (r *gormUserRepository) CreateSession(session *models.Session) error {
 
 func (r *gormUserRepository) DeleteSession(userID uuid.UUID) error {
     return r.db.Where("user_id = ?", userID).Delete(&models.Session{}).Error
+}
+
+func (r *gormUserRepository) GetActiveSessionByToken(accessToken string) (*models.Session, error) {
+    var session models.Session
+    err := r.db.Where("access_token = ? AND is_active = ? AND access_token_expires_at > ?", 
+        accessToken, true, time.Now()).First(&session).Error
+    if err != nil {
+        return nil, err
+    }
+    return &session, nil
+}
+
+func (r *gormUserRepository) RefreshSession(refreshToken string) (*models.Session, error) {
+    var session models.Session
+    err := r.db.Where("refresh_token = ? AND is_active = ? AND refresh_token_expires_at > ?", 
+        refreshToken, true, time.Now()).First(&session).Error
+    if err != nil {
+        return nil, err
+    }
+    return &session, nil
 }
 
 type gormUserRepository struct {

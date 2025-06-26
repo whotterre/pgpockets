@@ -119,7 +119,7 @@ func (h *AuthHandler) LoginUser(c *fiber.Ctx) error {
 	if len(userAgent) > 255 {
 		userAgent = userAgent[:255]
 	}
-	user, err := h.authService.Login(req.Email, req.Password, c.IP(), userAgent)
+	accessToken, refreshToken, err := h.authService.Login(req.Email, req.Password, c.IP(), userAgent)
 	if err != nil {
 		if err == services.ErrInvalidCredentials {
 			h.logger.Warn("Login failed: invalid credentials", zap.String("email", req.Email))
@@ -135,7 +135,8 @@ func (h *AuthHandler) LoginUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"messsage": "User logged in successfully",
-		"user":     user,
+		"accessToken":     accessToken,
+		"refreshToken":    refreshToken,
 	})
 }
 
