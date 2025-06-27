@@ -11,6 +11,7 @@ type WalletRepository interface {
 	CreateWallet(userID uuid.UUID) error 
 	GetWalletBalance(userID uuid.UUID) (string, error)
 	GetWalletByUserID(userID uuid.UUID) (*models.Wallet, error)
+	UpdateWalletBalance(userID uuid.UUID, newBalance string) error
 }
 
 type walletRepository struct {
@@ -51,4 +52,11 @@ func (r *walletRepository) GetWalletByUserID(userID uuid.UUID) (*models.Wallet, 
 		return nil, err
 	}
 	return &wallet, nil
+}
+
+func (r *walletRepository) UpdateWalletBalance(userID uuid.UUID, newBalance string) error {
+	if err := r.db.Model(&models.Wallet{}).Where("user_id = ?", userID).Update("balance", newBalance).Error; err != nil {
+		return err
+	}
+	return nil
 }

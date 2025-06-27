@@ -75,7 +75,16 @@ func (s *walletService) ChangeWalletCurrency(userID uuid.UUID, currency string, 
 
 	// Get current exchange rate
 	rateA, rateB, err := utils.GetExchangeRatesForPair(wallet.Currency, currency, apiKey, s.logger)
+	if err != nil {
+		s.logger.Error("Failed to get exchange rates", zap.Error(err))
+		return "", err
+		
+	}
 	wallet.Currency = currency
+	if err := s.walletRepo.UpdateWalletBalance(userID, wallet.Balance); err != nil {
+		s.logger.Error("Failed to update wallet balance ", zap.String("because", err.Error()))
+		return "", err
+	}
 
 	decimalBalance, err := decimal.NewFromString(wallet.Balance)
 	if err != nil {
