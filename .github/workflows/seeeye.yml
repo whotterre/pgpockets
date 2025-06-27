@@ -1,4 +1,3 @@
-# TODO: Implement CI/CD workflow
 name: CI/CD Workflow
 on:
   push:
