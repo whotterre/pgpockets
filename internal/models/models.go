@@ -2,7 +2,9 @@ package models
 
 import (
 	"time"
-	"github.com/google/uuid" 
+
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -80,14 +82,14 @@ type Profile struct {
 
 // Wallet represents the wallets table in the database.
 type Wallet struct {
-	ID        uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	Currency  string    `gorm:"type:varchar(3);not null;default:NGN" json:"currency"`
-	Balance   string    `gorm:"type:decimal(18,2);not null;default:0.00" json:"balance"`
-	Name      string    `gorm:"type:varchar(255);default:Naira Wallet" json:"name"`
-	IsActive  bool      `gorm:"default:true" json:"is_active"`
-	CreatedAt time.Time `gorm:"not null;default:now()" json:"created_at"`
-	UpdatedAt time.Time `gorm:"not null;default:now()" json:"updated_at"`
+	ID        uuid.UUID       `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	UserID    uuid.UUID       `gorm:"type:uuid;not null" json:"user_id"`
+	Currency  string          `gorm:"type:varchar(3);not null;default:NGN" json:"currency"`
+	Balance   decimal.Decimal `gorm:"type:numeric(18,2);not null;default:0.00" json:"balance"`
+	Name      string          `gorm:"type:varchar(255);default:Naira Wallet" json:"name"`
+	IsActive  bool            `gorm:"default:true" json:"is_active"`
+	CreatedAt time.Time       `gorm:"not null;default:now()" json:"created_at"`
+	UpdatedAt time.Time       `gorm:"not null;default:now()" json:"updated_at"`
 
 	User User `gorm:"foreignKey:UserID;references:ID"`
 }

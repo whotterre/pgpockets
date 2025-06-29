@@ -49,12 +49,22 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	cardGroup.Get("/card/:cardID", cardHandlers.GetCardByID)
 	cardGroup.Delete("/card/:cardID", cardHandlers.DeleteCard)
 	
+
 	// Wallet routes
-	walletService := services.NewWalletService(walletRepo, appLogger)
+	walletService := services.NewWalletService(walletRepo, appLogger , db)
 	walletHandlers := handlers.NewWalletHandler(walletService, appLogger, config.ExchangeRatesAPIKey)
 	walletGroup := apiV1.Group("/wallets")
 	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
 	walletGroup.Put("/currency/:desiredCurrency", walletHandlers.ChangeWalletCurrency)
+
+	// Transaction routes
+	txnRepo := repositories.NewTransactionRepository(db)
+	txnService := services.NewTransactionService(txnRepo, appLogger, walletRepo, db)
+	txnHandlers := handlers.NewTransactionHandler(txnService, appLogger)
+	txnGroup := apiV1.Group("/transaction")
+	txnGroup.Put("/make-transfer", txnHandlers.TransferFunds)
+
+
 	// Profile routes
 	profileRepo := repositories.NewProfileRepository(db)
 	profileService := services.NewProfileService(profileRepo, appLogger)

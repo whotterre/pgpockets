@@ -6,8 +6,8 @@ import (
 	"pgpockets/internal/utils"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 var (
@@ -24,12 +24,13 @@ type WalletService interface {
 type walletService struct {
 	walletRepo repositories.WalletRepository
 	logger     *zap.Logger
+	db         *gorm.DB
 }
-
-func NewWalletService(walletRepo repositories.WalletRepository, logger *zap.Logger) *walletService {
+func NewWalletService(walletRepo repositories.WalletRepository, logger *zap.Logger, db *gorm.DB) *walletService {
 	return &walletService{
 		walletRepo: walletRepo,
 		logger:     logger,
+		db:         db,
 	}
 }
 
@@ -81,16 +82,12 @@ func (s *walletService) ChangeWalletCurrency(userID uuid.UUID, currency string, 
 		
 	}
 	wallet.Currency = currency
-	if err := s.walletRepo.UpdateWalletBalance(userID, wallet.Balance); err != nil {
+	if err := s.walletRepo.UpdateWalletBalance(userID, wallet.Balance.String()); err != nil {
 		s.logger.Error("Failed to update wallet balance ", zap.String("because", err.Error()))
 		return "", err
 	}
 
-	decimalBalance, err := decimal.NewFromString(wallet.Balance)
-	if err != nil {
-		s.logger.Error("Failed to convert balance to decimal because", zap.Error(err))
-		return "", err
-	}
+	decimalBalance := wallet.Balance
 	// Make the conversion 
 	/*
 		The operation below is equal to 
@@ -100,3 +97,4 @@ func (s *walletService) ChangeWalletCurrency(userID uuid.UUID, currency string, 
 
 	return newBalance.String(), nil
 }
+
