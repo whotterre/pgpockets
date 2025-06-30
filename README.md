@@ -1,4 +1,4 @@
-# FinPay Backend
+# PgPockets Backend
 A FinTech Solution built with Go, Fiber, GORM, and PostgreSQL
 
 This repository contains the backend services for FinPay, a comprehensive FinTech application designed to empower users with robust financial management tools. The application enables users to create invoices, generate virtual cards, set up virtual accounts, and process payments in multiple currencies.  
