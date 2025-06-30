@@ -27,10 +27,10 @@ The FinPay project aims to build a high-performance and secure backend system ca
 - **golang.org/x/crypto/bcrypt**: For secure password hashing.
 - **golang-jwt/jwt/v5**: For JSON Web Token (JWT) based authentication.
 - **go-playground/validator**: For robust request input validation.
-- **joho/godotenv**: For loading environment variables from `.env` files.
+- **spf13/viper**: For loading environment variables from `.env` files and maintaining central config.
 - **Mono API / Open Banking**: (Future Integration) External FinTech APIs for core functionalities like virtual cards and currency exchange.
 
-💡 **What You Will Learn (or are Learning!)**
+💡 **What I Intend to Learn with This**
 - Building robust backend systems with Go.
 - Implementing secure authentication flows (registration, login, JWTs).
 - Database design and interaction with PostgreSQL using GORM.
@@ -50,8 +50,8 @@ Ensure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/finpay-backend.git
-cd finpay-backend
+git clone https://github.com/yourusername/pgpockets.git
+cd pg-pockets
 ```
 
 ### 2. Set Up Environment Variables
