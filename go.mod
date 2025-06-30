@@ -1,6 +1,6 @@
 module pgpockets
 
-go 1.24.4
+go 1.24
 
 require gorm.io/driver/postgres v1.6.0
 
