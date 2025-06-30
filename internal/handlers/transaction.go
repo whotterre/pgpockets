@@ -41,7 +41,7 @@ type MakeTransferRequest struct {
 func (h *TransactionHandler) TransferFunds(c *fiber.Ctx) error {
 	// Get relevant data from the request body
 	var req MakeTransferRequest
-
+	userID := c.Locals("userID")
 	if err := c.BodyParser(&req); err != nil {
 		h.logger.Error("Failed to parse request body for fund transfer", zap.Error(err))
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -67,6 +67,10 @@ func (h *TransactionHandler) TransferFunds(c *fiber.Ctx) error {
 	if err != nil {
 		h.logger.Error("Something went wrong while trying to convert reciever id to uuid", zap.Error(err))
 	}
+	userUUID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		h.logger.Error("Something went wrong while trying to convert user id to uuid", zap.Error(err))
+	}
 	amount, err := decimal.NewFromString(req.Amount)
 	if err != nil {
 		h.logger.Error("Something went wrong while trying to convert amount to decimal", zap.Error(err))
@@ -77,6 +81,7 @@ func (h *TransactionHandler) TransferFunds(c *fiber.Ctx) error {
 
 	// Actually make the transfer via service call
 	txnDetails, err := h.transactionService.TransferFunds(
+		userUUID,
 		senderUUID,
 		recieverUUID,
 		amount,

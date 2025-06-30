@@ -15,7 +15,7 @@ import (
 
 type TransactionService interface {
 	TransferFunds(
-		senderWalletID, recieverWalletID uuid.UUID,
+		userID, senderWalletID, recieverWalletID uuid.UUID,
 		amount decimal.Decimal,
 		currency, description string,
 	) (*models.Transaction, error)
@@ -47,7 +47,7 @@ func NewTransactionService(
 }
 
 func (s *transactionService) TransferFunds(
-	senderWalletID, recieverWalletID uuid.UUID,
+	userID, senderWalletID, recieverWalletID uuid.UUID,
 	amount decimal.Decimal,
 	currency, description string,
 ) (*models.Transaction, error) {
@@ -63,6 +63,13 @@ func (s *transactionService) TransferFunds(
 		if err != nil {
 			return errors.New("receiver wallet not found")
 		}
+
+		// Check if the initiator is actually the owner of the wallet o!!!
+		err = s.txnRepo.VerifyOwnership(userID, senderWalletID)
+		if err != nil {
+			return errors.New("user is not owner of wallet")
+		}
+		
 		senderBalance := senderWallet.Balance
 		if senderBalance.LessThan(amount) {
 			return errors.New("insufficient funds")

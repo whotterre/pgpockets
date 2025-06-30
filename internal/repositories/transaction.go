@@ -17,6 +17,7 @@ type TransactionRepository interface {
 		offset int,
 	)(*[]models.Transaction, int64, error) 
 	UpdateTransactionStatus(walletID uuid.UUID, newStatus string) error
+	VerifyOwnership(userID, walletID uuid.UUID) error 
 	
 }
 
@@ -75,4 +76,23 @@ func (r *transactionRepository) GetAllTransactionsByUserID(
     }
     
     return &transactions, total, nil
+}
+
+// VerifyOwnership checks if the user is the actual owner of the wallet
+func (r *transactionRepository) VerifyOwnership(userID, walletID uuid.UUID) error {
+    var count int64
+    err := r.db.Model(&models.Wallet{}).
+        Where("id = ? AND user_id = ?", walletID, userID).
+        Count(&count).
+        Error
+
+    if err != nil {
+        return fmt.Errorf("user is not the owner of the wallet: %w", err)
+    }
+
+    if count == 0 {
+        return fmt.Errorf("user %s does not own wallet %s", userID, walletID)
+    }
+
+    return nil
 }
