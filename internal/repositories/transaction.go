@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"pgpockets/internal/models"
 
 	"github.com/google/uuid"
@@ -10,7 +11,13 @@ import (
 type TransactionRepository interface {
 	CreateTransaction(transaction *models.Transaction) (*models.Transaction, error)
 	GetTransactionByID(id uuid.UUID) (*models.Transaction, error)
+	GetAllTransactionsByUserID(
+		userID uuid.UUID,
+		limit int,  
+		offset int,
+	)(*[]models.Transaction, int64, error) 
 	UpdateTransactionStatus(walletID uuid.UUID, newStatus string) error
+	
 }
 
 type transactionRepository struct {
@@ -45,3 +52,27 @@ func (r *transactionRepository) UpdateTransactionStatus(walletID uuid.UUID, newS
 
 
 // Gets all transactions made by a user
+func (r *transactionRepository) GetAllTransactionsByUserID(
+    userID uuid.UUID,
+    limit int,  
+    offset int,
+) (*[]models.Transaction, int64, error) {
+    var transactions []models.Transaction
+    query := r.db.
+        Model(&models.Transaction{}).
+        Joins("JOIN wallets ON wallets.id = transactions.sender_wallet_id").
+        Where("wallets.user_id = ?", userID).
+        Order("transactions.made_at DESC")  
+    
+    var total int64
+    if err := query.Count(&total).Error; err != nil {
+        return nil, 0, fmt.Errorf("failed to count transactions: %w", err)
+    }
+    
+    // 3. Apply pagination and fetch
+    if err := query.Limit(limit).Offset(offset).Find(&transactions).Error; err != nil {
+        return nil, 0, err
+    }
+    
+    return &transactions, total, nil
+}

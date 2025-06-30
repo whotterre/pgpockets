@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"net/http"
 	"pgpockets/internal/services"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -39,7 +41,7 @@ type MakeTransferRequest struct {
 func (h *TransactionHandler) TransferFunds(c *fiber.Ctx) error {
 	// Get relevant data from the request body
 	var req MakeTransferRequest
-	
+
 	if err := c.BodyParser(&req); err != nil {
 		h.logger.Error("Failed to parse request body for fund transfer", zap.Error(err))
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -94,3 +96,39 @@ func (h *TransactionHandler) TransferFunds(c *fiber.Ctx) error {
 	})
 }
 
+func (h *TransactionHandler) GetUserTransactionHistory(c *fiber.Ctx) error {
+	userUUID := c.Locals("userID").(uuid.UUID)
+	limitStr := c.Query("limit", "10")
+	offsetStr := c.Query("offset", "0")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil {
+		h.logger.Error("Invalid limit value", zap.Error(err))
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid limit value",
+		})
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil {
+		h.logger.Error("Invalid offset value", zap.Error(err))
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid offset value",
+		})
+	}
+
+	history, count, err := h.transactionService.GetTransactionHistory(userUUID, int(limit), int(offset))
+	if err != nil {
+		h.logger.Error("failed to get transaction history because", zap.Error(err))
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get transaction history",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "Transaction history loaded successfully",
+		"history": history,
+		"count":   count,
+	})
+
+}

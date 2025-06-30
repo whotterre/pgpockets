@@ -19,6 +19,10 @@ type TransactionService interface {
 		amount decimal.Decimal,
 		currency, description string,
 	) (*models.Transaction, error)
+	GetTransactionHistory(
+		userID uuid.UUID,
+		limit, offset int,
+	) (*[]models.Transaction, int64, error)
 }
 
 type transactionService struct {
@@ -113,6 +117,19 @@ func (s *transactionService) TransferFunds(
 		zap.String("amount", amount.String()))
 	return txn, nil
 }
+
+func (s *transactionService) GetTransactionHistory(
+	userID uuid.UUID,
+	limit, offset int,
+	) (*[]models.Transaction, int64, error) {
+	history, count, err := s.txnRepo.GetAllTransactionsByUserID(userID, limit, offset)
+	if err != nil {
+		s.appLogger.Error("failed to get transaction history", zap.Error(err))
+		return nil, 0, err
+	}
+	return history, count, nil
+}
+
 
 func (s *transactionService) generateDescription(
 	description string,
