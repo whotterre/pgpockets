@@ -64,7 +64,8 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	txnGroup := apiV1.Group("/transaction")
 	txnGroup.Patch("/make-transfer", txnHandlers.TransferFunds)
 	txnGroup.Get("/history", txnHandlers.GetUserTransactionHistory)
-
+	txnGroup.Get("/history/date-range", txnHandlers.GetTransactionsInDateRange)
+	txnGroup.Get("/transaction/:txnID", txnHandlers.GetTransactionByID)
 
 	// Profile routes
 	profileRepo := repositories.NewProfileRepository(db)

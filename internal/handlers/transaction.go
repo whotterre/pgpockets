@@ -137,3 +137,77 @@ func (h *TransactionHandler) GetUserTransactionHistory(c *fiber.Ctx) error {
 	})
 
 }
+
+func (h *TransactionHandler) GetTransactionsInDateRange(c *fiber.Ctx) error {
+	userUUID := c.Locals("userID").(uuid.UUID)
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+	limitStr := c.Query("limit", "10")
+	offsetStr := c.Query("offset", "0")
+
+	limit, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil {
+		h.logger.Error("Invalid limit value", zap.Error(err))
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid limit value",
+		})
+	}
+
+	offset, err := strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil {
+		h.logger.Error("Invalid offset value", zap.Error(err))
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid offset value",
+		})
+	}
+
+	txnHistory, err := h.transactionService.GetTransactionsInDateRange(
+		userUUID,
+		startDate,
+		endDate,
+		int(limit),
+		int(offset),
+	)
+	if err != nil {
+		h.logger.Error("failed to get transactions in date range because", zap.Error(err))
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get transactions in date range",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "Transactions in date range loaded successfully",
+		"history": txnHistory,
+	})
+}
+
+func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {
+	txnIDStr := c.Params("txnID")
+	if txnIDStr == "" {
+		h.logger.Error("Transaction ID is required")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Transaction ID is required",
+		})
+	}
+
+	txnID, err := uuid.Parse(txnIDStr)
+	if err != nil {
+		h.logger.Error("Invalid transaction ID format", zap.Error(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid transaction ID format",
+		})
+	}
+
+	txn, err := h.transactionService.RetrieveSingleTransaction(txnID)
+	if err != nil {
+		h.logger.Error("Failed to retrieve transaction by ID", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve transaction",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":     "Transaction retrieved successfully",
+		"transaction": txn,
+	})
+}

@@ -23,6 +23,12 @@ type TransactionService interface {
 		userID uuid.UUID,
 		limit, offset int,
 	) (*[]models.Transaction, int64, error)
+	GetTransactionsInDateRange(
+		userID uuid.UUID,
+		startDate, endDate string,
+		limit, offset int,
+	) (*[]models.Transaction, error)
+	RetrieveSingleTransaction(txnID uuid.UUID) (*models.Transaction, error)
 }
 
 type transactionService struct {
@@ -137,6 +143,27 @@ func (s *transactionService) GetTransactionHistory(
 	return history, count, nil
 }
 
+func (s *transactionService) GetTransactionsInDateRange(
+	userID uuid.UUID,
+	startDate, endDate string,
+	limit, offset int,
+) (*[]models.Transaction, error) {
+	history, err := s.txnRepo.GetTransactionsInDateRange(userID, startDate, endDate, limit, offset)
+	if err != nil {
+		s.appLogger.Error("failed to get transaction history in date range", zap.Error(err))
+		return nil, err
+	}
+	return history, nil
+}
+
+func (s *transactionService) RetrieveSingleTransaction(txnID uuid.UUID) (*models.Transaction, error) {
+	txn, err := s.txnRepo.GetTransactionByID(txnID)
+	if err != nil {
+		s.appLogger.Error("failed to get transaction by ID", zap.Error(err))
+		return nil, err
+	}
+	return txn, nil
+}
 
 func (s *transactionService) generateDescription(
 	description string,
