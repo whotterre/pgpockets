@@ -81,6 +81,23 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	beneficiaryGroup := apiV1.Group("/beneficiaries")
 	beneficiaryGroup.Get("/", beneficiaryHandlers.GetBeneficiaries)
 	beneficiaryGroup.Post("/", beneficiaryHandlers.AddBeneficiary)
+	// Notification Routes
+	notifRepo := repositories.NewNotifRepo(db)
+	notifServices := services.NewNotificationService(notifRepo)
+	notifHandlers := handlers.NewNotificationHandlers(notifServices, appLogger)
+	notifGroup := apiV1.Group("/notifications")
+	notifGroup.Get("/count", notifHandlers.GetNotificationCount)
+	notifGroup.Get("/unread-count", notifHandlers.GetUnreadNotificationCount)
+	notifGroup.Get("/", notifHandlers.GetNotifications)
+	notifGroup.Get("/unread", notifHandlers.GetUnreadNotifications)
+	notifGroup.Get("/:id", notifHandlers.GetNotification)
+	notifGroup.Patch("/:id/read", notifHandlers.MarkAsRead)
+	notifGroup.Patch("/:id/unread", notifHandlers.MarkAsUnread)
+	notifGroup.Patch("/read-all", notifHandlers.MarkAllAsRead)
+	notifGroup.Delete("/:id", notifHandlers.DeleteNotification)
+	notifGroup.Delete("/", notifHandlers.DeleteAllNotifications)
+	notifGroup.Delete("/read", notifHandlers.DeleteAllReadNotifications)
+	
 }
 
 
