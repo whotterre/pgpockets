@@ -128,7 +128,14 @@ func (s *authService) Register(
 
 func (s *authService) Login(email, password, ipAddr, userAgent string) (string, string, error) {
 	user, err := s.userRepo.GetUserByEmail(email)
-
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			s.logger.Warn("Login failed: user not found", zap.String("email", email))
+			return "", "", ErrInvalidCredentials
+		}
+		s.logger.Error("Error retrieving user", zap.Error(err))
+		return "", "", err
+	}
 	// Check if password matches
 	if user == nil {
 		s.logger.Warn("Login failed: user not found", zap.String("email", email))

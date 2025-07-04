@@ -74,8 +74,13 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	profileGroup := apiV1.Group("/profile")
 	profileGroup.Get("/", profileHandlers.GetProfile)
 	profileGroup.Put("/", profileHandlers.UpdateProfile)
-	
-
+	// Beneficiary routes
+	beneficiaryRepo := repositories.NewBeneficiaryRepository(db)
+	beneficiaryService := services.NewBeneficiaryService(beneficiaryRepo)
+	beneficiaryHandlers := handlers.NewBeneficiaryHandler(beneficiaryService, appLogger)
+	beneficiaryGroup := apiV1.Group("/beneficiaries")
+	beneficiaryGroup.Get("/", beneficiaryHandlers.GetBeneficiaries)
+	beneficiaryGroup.Post("/", beneficiaryHandlers.AddBeneficiary)
 }
 
 

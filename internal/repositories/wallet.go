@@ -12,6 +12,7 @@ type WalletRepository interface {
 	CreateWallet(userID uuid.UUID) error
 	GetWalletBalance(userID uuid.UUID) (string, error)
 	GetWalletByID(walletID uuid.UUID) (*models.Wallet, error)
+	GetWalletByEmail(email string) (*models.Wallet, error)
 	GetWalletByUserID(userID uuid.UUID) (*models.Wallet, error)
 	UpdateWalletBalance(walletID uuid.UUID, newBalance string) error
 }
@@ -57,6 +58,16 @@ func (r *walletRepository) GetWalletByID(walletID uuid.UUID) (*models.Wallet, er
 func (r *walletRepository) GetWalletByUserID(userID uuid.UUID) (*models.Wallet, error) {
 	var wallet models.Wallet
 	if err := r.db.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+		return nil, err
+	}
+	return &wallet, nil
+}
+
+func (r *walletRepository) GetWalletByEmail(email string) (*models.Wallet, error) {
+	var wallet models.Wallet
+	if err := r.db.Joins("JOIN users ON users.id = wallets.user_id").
+		Where("users.email = ?", email).
+		First(&wallet).Error; err != nil {
 		return nil, err
 	}
 	return &wallet, nil

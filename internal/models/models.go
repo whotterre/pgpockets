@@ -54,6 +54,15 @@ const (
 	CardTypeVerve      string = "verve"
 )
 
+type Beneficiary struct {
+	ID          uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null references" json:"user_id"`
+	Description string    `gorm:"type:text" json:"description"`
+	WalletID    uuid.UUID `gorm:"type:uuid;not null" json:"wallet_id"`
+	Wallet      Wallet    `gorm:"foreignKey:WalletID;references:ID"`
+	CreatedAt   time.Time `gorm:"not null;default:now()" json:"created_at"`
+}
+
 // User represents the users table in the database.
 type User struct {
 	ID              uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
@@ -190,4 +199,12 @@ type Session struct {
 
 	// Associations
 	User User `gorm:"foreignKey:UserID;references:ID"`
+}
+
+type Notification struct {
+	Title       string    `gorm:"type:text;not null" json:"title"`
+	Description string    `gorm:"type:text;not null" json:"description"`
+	RecipientID uuid.UUID `gorm:"type:uuid;not null" json:"recipient_id"`
+	IsRead      bool      `gorm:"default:false" json:"is_read"`
+	CreatedAt   time.Time `gorm:"not null;default:now()" json:"created_at"`
 }

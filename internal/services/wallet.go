@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"pgpockets/internal/models"
 	"pgpockets/internal/repositories"
 	"pgpockets/internal/utils"
 
@@ -18,6 +19,7 @@ var (
 type WalletService interface {
 	CreateWallet(userID uuid.UUID) error
 	GetWalletBalance(userID uuid.UUID) (string, error)
+	GetWalletByEmail(email string) (*models.Wallet, error)
 	ChangeWalletCurrency(userID uuid.UUID, currency, apiKey string) (string, error)
 }
 
@@ -49,6 +51,15 @@ func (s *walletService) GetWalletBalance(userID uuid.UUID) (string, error) {
 		return "", err
 	}
 	return balance, nil
+}
+
+func (s *walletService) GetWalletByEmail(email string) (*models.Wallet, error) {
+	wallet, err := s.walletRepo.GetWalletByEmail(email)
+	if err != nil {
+		s.logger.Error("Failed to retrieve wallet by email", zap.Error(err))
+		return nil, err
+	}
+	return wallet, nil
 }
 
 func (s *walletService) ChangeWalletCurrency(userID uuid.UUID, currency string, apiKey string) (string, error) {
