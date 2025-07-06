@@ -3,12 +3,14 @@ package repositories
 import (
 	"pgpockets/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type BeneficiaryRepository interface {
 	Create(beneficiary *models.Beneficiary) (*models.Beneficiary, error)
 	GetBeneficiaries(userID string) ([]models.Beneficiary, error)
+	DeleteBeneficiary(beneID uuid.UUID, userID uuid.UUID) error 
 }
 
 type beneficiaryRepository struct {
@@ -33,4 +35,13 @@ func (r *beneficiaryRepository) GetBeneficiaries(userID string) ([]models.Benefi
 		return nil, err
 	}
 	return beneficiaries, nil
+}
+
+// Deletes a beneficiary by their beneficiary ID
+func (r *beneficiaryRepository) DeleteBeneficiary(beneID uuid.UUID, userID uuid.UUID) error {
+	if err := r.db.Where("id = ? AND user_id = ?", beneID, userID).Delete(&models.Beneficiary{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

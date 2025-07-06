@@ -99,3 +99,32 @@ func (h *BeneficiaryHandler) AddBeneficiary(c *fiber.Ctx) error {
 	})
 
 }
+
+func (h *BeneficiaryHandler) DeleteBeneficiary(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	if userID == "" {
+		h.logger.Error("The request requires you to be authenticated")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "User is not authenticated",
+		})
+	}
+	beneficiaryID := c.Params("beneID")
+	if beneficiaryID == "" {
+		h.logger.Error("The request requires beneficiary ID to be passed")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Beneficiary ID missing from request",
+		})
+	}
+	err := h.beneficiaryService.DeleteBeneficiary(userID, beneficiaryID)
+	if err != nil {
+		h.logger.Error("Failed to delete beneficiary", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete beneficiary",
+		})
+	}
+
+	h.logger.Info("Successfully deleted beneficiary")
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Beneficiary deleted successfully",
+	})
+}

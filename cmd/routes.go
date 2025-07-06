@@ -76,11 +76,12 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	profileGroup.Put("/", profileHandlers.UpdateProfile)
 	// Beneficiary routes
 	beneficiaryRepo := repositories.NewBeneficiaryRepository(db)
-	beneficiaryService := services.NewBeneficiaryService(beneficiaryRepo)
+	beneficiaryService := services.NewBeneficiaryService(beneficiaryRepo, appLogger)
 	beneficiaryHandlers := handlers.NewBeneficiaryHandler(beneficiaryService, appLogger)
 	beneficiaryGroup := apiV1.Group("/beneficiaries")
 	beneficiaryGroup.Get("/", beneficiaryHandlers.GetBeneficiaries)
 	beneficiaryGroup.Post("/", beneficiaryHandlers.AddBeneficiary)
+	beneficiaryGroup.Delete("/beneficiary/:beneID", beneficiaryHandlers.DeleteBeneficiary)
 	// Notification Routes
 	notifRepo := repositories.NewNotifRepo(db)
 	notifServices := services.NewNotificationService(notifRepo)
