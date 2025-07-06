@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"pgpockets/internal/models"
 	"pgpockets/internal/repositories"
 	"pgpockets/internal/utils"
@@ -21,6 +22,7 @@ type WalletService interface {
 	GetWalletBalance(userID uuid.UUID) (string, error)
 	GetWalletByEmail(email string) (*models.Wallet, error)
 	ChangeWalletCurrency(userID uuid.UUID, currency, apiKey string) (string, error)
+	GetBalancesForAllWallets(userIDStr string) ([]map[string]string, error)
 }
 
 type walletService struct {
@@ -109,3 +111,18 @@ func (s *walletService) ChangeWalletCurrency(userID uuid.UUID, currency string, 
 	return newBalance.String(), nil
 }
 
+func (s *walletService) GetBalancesForAllWallets(userIDStr string) ([]map[string]string, error) {
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		s.logger.Error(fmt.Sprintf("Failed to convert user ID from string to uuid while getting balances for a wallets belonging to user with %s", userIDStr))
+		return nil, err
+	}
+
+	balances, err := s.walletRepo.GetBalancesForAllWallets(userID)
+	if err != nil {
+		s.logger.Error(fmt.Sprintf("Failed to get balances for all wallets belonging to user with user %s", userIDStr))
+		return nil, err 
+	}
+	s.logger.Info("Successfully retrieved all balances for all wallets belonging to the user")
+	return balances, nil 
+}

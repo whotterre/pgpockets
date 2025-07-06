@@ -14,6 +14,7 @@ type WalletRepository interface {
 	GetWalletByID(walletID uuid.UUID) (*models.Wallet, error)
 	GetWalletByEmail(email string) (*models.Wallet, error)
 	GetWalletByUserID(userID uuid.UUID) (*models.Wallet, error)
+	GetBalancesForAllWallets(userID uuid.UUID) ([]map[string]string, error)
 	UpdateWalletBalance(walletID uuid.UUID, newBalance string) error
 }
 
@@ -79,4 +80,20 @@ func (r *walletRepository) UpdateWalletBalance(walletID uuid.UUID, newBalance st
 	}
 	return nil
 }
+func (r *walletRepository) GetBalancesForAllWallets(userID uuid.UUID) ([]map[string]string, error) {
+	var wallets []models.Wallet
+	if err := r.db.Select("balance, currency").
+		Where("user_id = ?", userID).
+		Find(&wallets).Error; err != nil {
+		return nil, err
+	}
 
+	var balances []map[string]string
+	for _, wallet := range wallets {
+		balances = append(balances, map[string]string{
+			"balance":  wallet.Balance.String(),
+			"currency": wallet.Currency,
+		})
+	}
+	return balances, nil
+}

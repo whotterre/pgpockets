@@ -55,8 +55,8 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	walletHandlers := handlers.NewWalletHandler(walletService, appLogger, config.ExchangeRatesAPIKey)
 	walletGroup := apiV1.Group("/wallets")
 	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
+	walletGroup.Get("/balances", walletHandlers.GetBalancesForAllWallets)
 	walletGroup.Patch("/currency/:desiredCurrency", walletHandlers.ChangeWalletCurrency)
-
 	// Transaction routes
 	txnRepo := repositories.NewTransactionRepository(db)
 	txnService := services.NewTransactionService(txnRepo, appLogger, walletRepo, db)

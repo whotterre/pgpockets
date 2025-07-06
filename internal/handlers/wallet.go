@@ -64,3 +64,21 @@ func (w *WalletHandler) ChangeWalletCurrency(c *fiber.Ctx) error {
 	})
 
 }
+
+
+func (h *WalletHandler) GetBalancesForAllWallets(c *fiber.Ctx) error {
+	userID := c.Locals("userID").(string)
+	
+	balances, err := h.walletService.GetBalancesForAllWallets(userID)
+	if err != nil {
+		h.logger.Error("Something went wrong while getting balances for wallets")
+		return err
+	}
+
+	h.logger.Info("Successfully retrieved wallet balances")
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Successfully retrieved wallet balances",
+		"balances": balances,
+	})
+
+}
