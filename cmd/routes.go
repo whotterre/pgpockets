@@ -8,8 +8,10 @@ import (
 	"pgpockets/internal/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"time"
 )
 
 func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db *gorm.DB) {
@@ -27,10 +29,14 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 
 	// Initialize authMiddleware
 	authMiddleware := middleware.NewAuthMiddleware(config.JWTSecret, appLogger, userRepo)
-
+	// Initialize reusable rate limiter concern
+	rateLimiter := limiter.New(limiter.Config{
+		Max:        10,
+		Expiration: 2 * time.Second,
+	})
 	/* Protected routes */
 	apiV1.Use(authMiddleware.RequireAuth())
-	
+
 	authGroup.Delete("/logout", authHandlers.LogoutUser)
 
 	// Dashboard routes
@@ -38,6 +44,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	dashboardService := services.NewDashboardService(dashboardRepo, appLogger, config.ExchangeRatesAPIKey)
 	dashboardHandlers := handlers.NewDashboardHandler(dashboardService, appLogger)
 	dashboardGroup := apiV1.Group("/dashboard")
+	dashboardGroup.Use(rateLimiter)
 	dashboardGroup.Get("/exchange-rates", dashboardHandlers.GetExchangeRates)
 	// Card routes
 	cardRepo := repositories.NewCardRepository(db)
@@ -48,12 +55,13 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	cardGroup.Get("/cards", cardHandlers.RetrieveAllCards)
 	cardGroup.Get("/card/:cardID", cardHandlers.GetCardByID)
 	cardGroup.Delete("/card/:cardID", cardHandlers.DeleteCard)
-	
 
 	// Wallet routes
-	walletService := services.NewWalletService(walletRepo, appLogger , db)
+	walletService := services.NewWalletService(walletRepo, appLogger, db)
 	walletHandlers := handlers.NewWalletHandler(walletService, appLogger, config.ExchangeRatesAPIKey)
 	walletGroup := apiV1.Group("/wallets")
+	// Rate limiting
+	walletGroup.Use(rateLimiter)
 	walletGroup.Get("/balance", walletHandlers.GetWalletBalance)
 	walletGroup.Get("/balances", walletHandlers.GetBalancesForAllWallets)
 	walletGroup.Patch("/currency/:desiredCurrency", walletHandlers.ChangeWalletCurrency)
@@ -62,6 +70,7 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	txnService := services.NewTransactionService(txnRepo, appLogger, walletRepo, db)
 	txnHandlers := handlers.NewTransactionHandler(txnService, appLogger)
 	txnGroup := apiV1.Group("/transaction")
+	txnGroup.Use(rateLimiter)
 	txnGroup.Patch("/make-transfer", txnHandlers.TransferFunds)
 	txnGroup.Get("/history", txnHandlers.GetUserTransactionHistory)
 	txnGroup.Get("/history/date-range", txnHandlers.GetTransactionsInDateRange)
@@ -98,7 +107,5 @@ func SetupRoutes(app *fiber.App, config config.Config, appLogger *zap.Logger, db
 	notifGroup.Delete("/:id", notifHandlers.DeleteNotification)
 	notifGroup.Delete("/", notifHandlers.DeleteAllNotifications)
 	notifGroup.Delete("/read", notifHandlers.DeleteAllReadNotifications)
-	
+
 }
-
-
