@@ -73,6 +73,33 @@ type User struct {
 	UpdatedAt       time.Time `gorm:"not null;default:now()" json:"updated_at"`
 }
 
+// KYC Details
+type KYCDetails struct {
+	ID     uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	UserID uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	// Bio data
+	FirstName   string     `gorm:"type:varchar(255);not null" json:"first_name"`
+	LastName    string     `gorm:"type:varchar(255);not null" json:"last_name"`
+	DateOfBirth *time.Time `gorm:"type:date" json:"date_of_birth"`
+	PhoneNumber string     `gorm:"type:varchar(20);unique" json:"phone_number"`
+	// Residential Info
+	Country     string `gorm:"type:varchar(128)" json:"country"`
+	HouseNumber string `gorm:"type:varchar(128)" json:"house_number"`
+	Street      string `gorm:"type:varchar(255)" json:"street"`
+	LGA         string `gorm:"type:varchar(128)" json:"lga"`
+	State       string `gorm:"type:varchar(128)" json:"state"`
+	// PII
+	BVN string `gorm:"type:varchar(12)" json:"bvn"` 
+	NIN string `gorm:"type:varchar(12)" json:"nin"`
+	// Financial Information
+	Occupation             string    `gorm:"type:varchar(255)" json:"occupation"`
+	EstimatedMonthlySalary int64     `gorm:"type:bigint" json:"estimated_monthly_salary"`
+	CreatedAt              time.Time `gorm:"not null;default:now()" json:"created_at"`
+	UpdatedAt              time.Time `gorm:"not null;default:now()" json:"updated_at"`
+
+	User User `gorm:"foreignKey:UserID;references:ID"`
+}
+
 // Profile represents the profiles table in the database.
 type Profile struct {
 	ID          uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
