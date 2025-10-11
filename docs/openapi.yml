@@ -1,0 +1,755 @@
+openapi: 3.0.3
+info:
+  title: PGPockets API
+  description: API specification for the PgPockets backend
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required: [email, password, first_name, last_name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        first_name:
+          type: string
+        last_name:
+          type: string
+        dob:
+          type: string
+          description: date (string)
+        phone_number:
+          type: string
+        address:
+          type: string
+        gender:
+          type: string
+    UserLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        phone_number:
+          type: string
+        address:
+          type: string
+        gender:
+          type: string
+        profile_image_url:
+          type: string
+          format: uri
+    KYCDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        phone_number:
+          type: string
+        country:
+          type: string
+        house_number:
+          type: string
+        street:
+          type: string
+        lga:
+          type: string
+        state:
+          type: string
+        bvn:
+          type: string
+        nin:
+          type: string
+        occupation:
+          type: string
+        estimated_monthly_salary:
+          type: integer
+        id_document_url:
+          type: string
+          format: uri
+        selfie_url:
+          type: string
+          format: uri
+    Card:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        card_token:
+          type: string
+        last_four_digits:
+          type: string
+        card_type:
+          type: string
+        expiry_month:
+          type: string
+        expiry_year:
+          type: string
+        card_brand:
+          type: string
+        bank_name:
+          type: string
+        is_active:
+          type: boolean
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        balance:
+          type: string
+        name:
+          type: string
+        is_active:
+          type: boolean
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        transaction_type:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        reference_id:
+          type: string
+        made_at:
+          type: string
+          format: date-time
+    Notification:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        recipient_id:
+          type: string
+          format: uuid
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    Beneficiary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        wallet_id:
+          type: string
+          format: uuid
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Unauthorized
+  /auth/logout:
+    delete:
+      tags: [Auth]
+      summary: Logout current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out
+
+  /dashboard/exchange-rates:
+    get:
+      tags: [Dashboard]
+      summary: Get exchange rates
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /cards:
+    post:
+      tags: [Cards]
+      summary: Create a card
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                last_four_digits:
+                  type: string
+                card_token:
+                  type: string
+                card_type:
+                  type: string
+                expiry_month:
+                  type: string
+                expiry_year:
+                  type: string
+                card_brand:
+                  type: string
+                bank_name:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        '201':
+          description: Card created
+    get:
+      tags: [Cards]
+      summary: List all cards for user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /card/{cardID}:
+    get:
+      tags: [Cards]
+      summary: Get card by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cardID
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Cards]
+      summary: Delete a card
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cardID
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Deleted
+
+  /wallets/balance:
+    get:
+      tags: [Wallets]
+      summary: Get wallet balance
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /wallets/balances:
+    get:
+      tags: [Wallets]
+      summary: Get balances for all wallets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /wallets/currency/{desiredCurrency}:
+    patch:
+      tags: [Wallets]
+      summary: Change wallet currency
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: desiredCurrency
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Currency changed
+
+  /transaction/make-transfer:
+    patch:
+      tags: [Transactions]
+      summary: Make a transfer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sender_wallet_id:
+                  type: string
+                receiver_wallet_id:
+                  type: string
+                amount:
+                  type: string
+                currency:
+                  type: string
+                transaction_type:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Transfer successful
+
+  /transaction/history:
+    get:
+      tags: [Transactions]
+      summary: Get user transaction history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /transaction/history/date-range:
+    get:
+      tags: [Transactions]
+      summary: Get transactions in a date range
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+        - in: query
+          name: end_date
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /transaction/{txnID}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: txnID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get current user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+    put:
+      tags: [Profile]
+      summary: Update profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                dob:
+                  type: string
+                address:
+                  type: string
+                phone_number:
+                  type: string
+                gender:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          description: Bad Request
+
+  /profile/upload:
+    post:
+      tags: [Profile]
+      summary: Upload a profile image
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profile_image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded
+
+  /beneficiaries:
+    get:
+      tags: [Beneficiaries]
+      summary: Get beneficiaries
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Beneficiaries]
+      summary: Add a beneficiary
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipient_id:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  /beneficiaries/beneficiary/{beneID}:
+    delete:
+      tags: [Beneficiaries]
+      summary: Delete a beneficiary
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: beneID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+
+  /kyc/upload:
+    post:
+      tags: [KYC]
+      summary: Upload KYC images (id document and selfie)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                id_document:
+                  type: string
+                  format: binary
+                selfie:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded
+
+  /notifications/count:
+    get:
+      tags: [Notifications]
+      summary: Get notifications count
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: includeRead
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread notifications count
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Notifications]
+      summary: Delete all notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Deleted
+
+  /notifications/unread:
+    get:
+      tags: [Notifications]
+      summary: Get unread notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /notifications/{id}:
+    get:
+      tags: [Notifications]
+      summary: Get a specific notification
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Notifications]
+      summary: Delete a notification
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+
+  /notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /notifications/{id}/unread:
+    patch:
+      tags: [Notifications]
+      summary: Mark notification as unread
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+
+  /notifications/read-all:
+    patch:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+
+tags:
+  - name: Auth
+  - name: Dashboard
+  - name: Cards
+  - name: Wallets
+  - name: Transactions
+  - name: Profile
+  - name: Beneficiaries
+  - name: KYC
+  - name: Notifications
